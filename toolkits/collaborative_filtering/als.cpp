@@ -385,7 +385,7 @@ inline bool graph_loader(graph_type& graph,
   namespace phoenix = boost::phoenix;
   // Determine the role of the data
   edge_data::data_role_type role = edge_data::TRAIN;
-  if(boost::ends_with(filename,".validate")) role = edge_data::VALIDATE;
+  if(boost::ends_with(filename,".validate") || boost::contains(filename,".validate")) role = edge_data::VALIDATE;
   else if(boost::ends_with(filename, ".predict")) role = edge_data::PREDICT;
   // Parse the line
   graph_type::vertex_id_type source_id(-1), target_id(-1);
@@ -573,12 +573,15 @@ int main(int argc, char** argv) {
     "Compute the ALS factorization of a matrix.";
   graphlab::command_line_options clopts(description);
   std::string input_dir;
+  std::string validate_dir;
   std::string predictions;
   size_t interval = 10;
   std::string exec_type = "synchronous";
   clopts.attach_option("matrix", input_dir,
                        "The directory containing the matrix file");
   clopts.add_positional("matrix");
+  clopts.attach_option("test-dir", validate_dir,
+                         "The directory containing the validation file");
   clopts.attach_option("D",  vertex_data::NLATENT,
                        "Number of latent parameters to use.");
   clopts.attach_option("max_iter", als_vertex_program::MAX_UPDATES,
@@ -615,7 +618,9 @@ int main(int argc, char** argv) {
   dc.cout() << "Loading graph." << std::endl;
   graphlab::timer timer; 
   graph_type graph(dc, clopts);  
-  graph.load(input_dir, graph_loader); 
+  graph.load(input_dir, graph_loader);
+  graph.load(validate_dir, graph_loader);
+  
   dc.cout() << "Loading graph. Finished in " 
             << timer.current_time() << std::endl;
 
